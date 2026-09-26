@@ -1,0 +1,18 @@
+{
+  "manifest_version": 3,
+  "name": "Salva WebP in JPG",
+  "version": "2.0",
+  "description": "Converte e salva direttamente le immagini WebP in JPG con nome personalizzato.",
+  "permissions": [
+    "contextMenus",
+    "downloads",
+    "scripting"
+  ],
+  "host_permissions": [
+    "http://*/*",
+    "https://*/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  }
+}
