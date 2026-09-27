@@ -3,6 +3,15 @@
   "name": "Salva WebP in JPG",
   "version": "2.0",
   "description": "Converte e salva direttamente le immagini WebP in JPG con nome personalizzato.",
+  "icons": {
+    "16": "icon.png",
+    "48": "icon.png",
+    "128": "icon.png"
+  },
+  "action": {
+    "default_icon": "icon.png",
+    "default_title": "Salva WebP in JPG"
+  },
   "permissions": [
     "contextMenus",
     "downloads",
