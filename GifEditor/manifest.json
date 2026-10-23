@@ -1,0 +1,30 @@
+{
+  "manifest_version": 3,
+  "name": "GIF Frame Master",
+  "version": "1.2",
+  "description": "Advanced GIF editor: frame management, crop, resize, multi-GIF merge, and Gifsicle-powered optimization.",
+  "action": {
+    "default_title": "Open GIF Frame Master",
+    "default_icon": {
+      "16": "icon.png",
+      "32": "icon.png",
+      "48": "icon.png",
+      "128": "icon.png"
+    }
+  },
+  "icons": {
+    "16": "icon.png",
+    "32": "icon.png",
+    "48": "icon.png",
+    "128": "icon.png"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "permissions": [
+    "activeTab"
+  ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'"
+  }
+}

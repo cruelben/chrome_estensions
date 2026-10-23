@@ -1,0 +1,3144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>GIF Frame Master</title>
+
+    <link rel="icon" type="image/png" href="icon.png">
+
+    <style>
+        :root {
+            --thumb-size: 80px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            min-height: 100%;
+            font-family: Arial, Helvetica, sans-serif;
+            background: #111827;
+            color: #e5e7eb;
+        }
+
+        body {
+            min-height: 100vh;
+
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* =====================================================
+           HEADER
+        ===================================================== */
+
+        .header {
+            width: 100%;
+            padding: 18px 25px;
+            background: #1f2937;
+            border-bottom: 1px solid #374151;
+
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo {
+            width: 42px;
+            height: 42px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            overflow: hidden;
+
+            flex-shrink: 0;
+        }
+
+        .logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            display: block;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 21px;
+            font-weight: 600;
+        }
+
+        .header-subtitle {
+            margin-top: 3px;
+            color: #9ca3af;
+            font-size: 13px;
+        }
+
+        .header-link {
+            color: #9ca3af;
+            text-decoration: none;
+            font-size: 12px;
+            transition: 0.15s;
+        }
+
+        .header-link:hover {
+            color: #60a5fa;
+        }
+
+        /* =====================================================
+           TAB BAR
+        ===================================================== */
+
+        .tab-bar {
+            width: 100%;
+            background: #0b1120;
+            border-bottom: 1px solid #374151;
+
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+
+            padding: 8px 25px;
+
+            position: sticky;
+            top: 78px;
+            z-index: 90;
+        }
+
+        .tab-button {
+            padding: 9px 16px;
+
+            background: transparent;
+            color: #9ca3af;
+
+            border: 1px solid transparent;
+            border-radius: 7px;
+
+            font-size: 13px;
+            font-weight: 600;
+
+            cursor: pointer;
+
+            transition: 0.15s;
+
+            white-space: nowrap;
+        }
+
+        .tab-button:hover:not(:disabled) {
+            background: #1f2937;
+            color: #e5e7eb;
+        }
+
+        .tab-button.active {
+            background: #2563eb;
+            color: #ffffff;
+            border-color: #2563eb;
+        }
+
+        .tab-button:disabled {
+            opacity: 0.35;
+            cursor: not-allowed;
+        }
+
+        .tab-button .tab-counter {
+            display: inline-block;
+
+            margin-left: 6px;
+
+            padding: 1px 7px;
+
+            background: rgba(255, 255, 255, 0.15);
+
+            border-radius: 10px;
+
+            font-size: 11px;
+            font-weight: normal;
+        }
+
+        .tab-button.active .tab-counter {
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        .tab-button .tab-dot {
+            display: inline-block;
+
+            width: 7px;
+            height: 7px;
+
+            margin-left: 6px;
+
+            background: #facc15;
+
+            border-radius: 50%;
+
+            vertical-align: middle;
+        }
+
+        /* =====================================================
+           MAIN
+        ===================================================== */
+
+        .main {
+            width: 100%;
+            max-width: 1500px;
+            margin: 0 auto;
+            padding: 25px;
+
+            flex: 1 0 auto;
+        }
+
+        /* =====================================================
+           TAB PANELS
+        ===================================================== */
+
+        .tab-panel {
+            display: none;
+        }
+
+        .tab-panel.active {
+            display: block;
+        }
+
+        /* =====================================================
+           CARD
+        ===================================================== */
+
+        .card {
+            background: #1f2937;
+            border: 1px solid #374151;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .card-title {
+            margin: 0 0 15px 0;
+            font-size: 17px;
+            font-weight: 600;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+
+            gap: 12px;
+
+            margin-bottom: 15px;
+        }
+
+        .card-header .card-title {
+            margin: 0;
+        }
+
+        /* =====================================================
+           ERROR BOX
+        ===================================================== */
+
+        .error-box {
+            display: none;
+
+            margin-top: 15px;
+
+            padding: 12px 15px;
+
+            background: #3f1d1d;
+            border: 1px solid #b91c1c;
+            border-radius: 8px;
+
+            color: #fca5a5;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .error-box.visible {
+            display: block;
+        }
+
+        .error-box .error-title {
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: #fecaca;
+        }
+
+        .error-box details {
+            margin-top: 8px;
+        }
+
+        .error-box summary {
+            cursor: pointer;
+            color: #9ca3af;
+            font-size: 12px;
+        }
+
+        .error-box pre {
+            margin: 6px 0 0 0;
+
+            padding: 8px;
+
+            background: #111827;
+            border-radius: 5px;
+
+            color: #f87171;
+            font-size: 11px;
+
+            overflow-x: auto;
+
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        /* =====================================================
+           TAB NAV
+        ===================================================== */
+
+        .tab-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+
+            margin-top: 20px;
+            padding-top: 15px;
+
+            border-top: 1px solid #374151;
+        }
+
+        .tab-nav button {
+            min-width: 140px;
+        }
+
+        .tab-nav button.hidden {
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        /* =====================================================
+           FILE AREA
+        ===================================================== */
+
+        .file-area {
+            border: 2px dashed #4b5563;
+            border-radius: 10px;
+            padding: 35px 20px;
+
+            text-align: center;
+
+            transition: 0.2s;
+        }
+
+        .file-area:hover {
+            border-color: #60a5fa;
+            background: #1e293b;
+        }
+
+        .file-icon {
+            font-size: 40px;
+            margin-bottom: 10px;
+        }
+
+        .file-description {
+            color: #9ca3af;
+            margin-bottom: 18px;
+            font-size: 14px;
+        }
+
+        #gif-file {
+            display: none;
+        }
+
+        .file-button {
+            display: inline-block;
+
+            padding: 11px 20px;
+
+            background: #2563eb;
+            color: white;
+
+            border-radius: 7px;
+
+            cursor: pointer;
+
+            font-size: 14px;
+            font-weight: 600;
+
+            transition: 0.2s;
+        }
+
+        .file-button:hover {
+            background: #1d4ed8;
+        }
+
+        #loading {
+            display: none;
+            margin-left: 12px;
+            color: #60a5fa;
+            font-size: 14px;
+        }
+
+        /* =====================================================
+           WORKSPACE
+        ===================================================== */
+
+        .toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        button {
+            border: none;
+            border-radius: 7px;
+
+            padding: 9px 14px;
+
+            background: #374151;
+            color: #e5e7eb;
+
+            cursor: pointer;
+
+            font-size: 13px;
+
+            transition: 0.15s;
+        }
+
+        button:hover {
+            background: #4b5563;
+        }
+
+        button.primary {
+            background: #2563eb;
+        }
+
+        button.primary:hover {
+            background: #1d4ed8;
+        }
+
+        button.danger {
+            background: #b91c1c;
+        }
+
+        button.danger:hover {
+            background: #991b1b;
+        }
+
+        button.success {
+            background: #15803d;
+        }
+
+        button.success:hover {
+            background: #166534;
+        }
+
+        .separator {
+            width: 1px;
+            height: 25px;
+            background: #4b5563;
+            margin: 0 5px;
+        }
+
+        .inline-control {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: #9ca3af;
+            font-size: 13px;
+        }
+
+        .inline-control input[type="number"],
+        .inline-control input[type="range"] {
+            accent-color: #2563eb;
+        }
+
+        .inline-control input[type="number"] {
+            width: 55px;
+            padding: 6px;
+            border-radius: 6px;
+            border: 1px solid #4b5563;
+            background: #111827;
+            color: #e5e7eb;
+        }
+
+        .threshold-value {
+            display: inline-block;
+            min-width: 45px;
+
+            color: #60a5fa;
+            font-weight: 600;
+
+            text-align: right;
+        }
+
+        /* =====================================================
+           FRAME INFO
+        ===================================================== */
+
+        .frame-info {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 15px;
+
+            margin-bottom: 15px;
+
+            color: #9ca3af;
+            font-size: 14px;
+        }
+
+        .frame-info strong {
+            color: #e5e7eb;
+        }
+
+        #frame-count {
+            color: #60a5fa;
+        }
+
+        /* =====================================================
+           ANIMATED PREVIEW (tab 2)
+        ===================================================== */
+
+        .preview-anim {
+            background: #0b1120;
+
+            border: 1px solid #374151;
+            border-radius: 10px;
+
+            padding: 12px;
+
+            margin-bottom: 15px;
+
+            display: flex;
+            align-items: center;
+            gap: 15px;
+
+            flex-wrap: wrap;
+        }
+
+        .preview-anim canvas {
+            display: block;
+
+            background:
+                repeating-conic-gradient(
+                    #d1d5db 0% 25%,
+                    #ffffff 0% 50%
+                )
+                50% / 16px 16px;
+
+            border-radius: 6px;
+
+            max-width: 320px;
+            max-height: 240px;
+
+            width: auto;
+            height: auto;
+
+            cursor: pointer;
+        }
+
+        .preview-anim canvas:hover {
+            outline: 2px solid #60a5fa;
+        }
+
+        .preview-anim-info {
+            color: #9ca3af;
+            font-size: 13px;
+        }
+
+        .preview-anim-info strong {
+            color: #e5e7eb;
+        }
+
+        /* =====================================================
+           FRAME GRID
+        ===================================================== */
+
+        #frames-grid {
+            display: grid;
+
+            grid-template-columns:
+                repeat(
+                    auto-fill,
+                    minmax(calc(var(--thumb-size) + 20px), 1fr)
+                );
+
+            gap: 12px;
+
+            max-height: 600px;
+            overflow-y: auto;
+
+            padding: 5px;
+        }
+
+        .frame-card {
+            position: relative;
+
+            min-height: calc(var(--thumb-size) + 50px);
+
+            background: #111827;
+
+            border: 2px solid #374151;
+            border-radius: 8px;
+
+            padding: 10px;
+
+            cursor: pointer;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            transition: 0.15s;
+        }
+
+        .frame-card:hover {
+            border-color: #60a5fa;
+        }
+
+        .frame-card.selected {
+            border-color: #ef4444;
+            background: #3f1d1d;
+        }
+
+        .frame-card canvas {
+            max-width: 100%;
+            max-height: var(--thumb-size);
+
+            width: auto;
+            height: auto;
+
+            image-rendering: auto;
+
+            background:
+                repeating-conic-gradient(
+                    #d1d5db 0% 25%,
+                    #ffffff 0% 50%
+                )
+                50% / 12px 12px;
+        }
+
+        .frame-badge {
+            position: absolute;
+
+            top: 5px;
+            left: 5px;
+
+            padding: 3px 7px;
+
+            border-radius: 5px;
+
+            background: rgba(0, 0, 0, 0.75);
+
+            color: white;
+
+            font-size: 11px;
+            font-weight: bold;
+
+            z-index: 2;
+        }
+
+        .frame-card.selected .frame-badge {
+            background: #dc2626;
+        }
+
+        /* =====================================================
+           DRAG & DROP
+        ===================================================== */
+
+        .frame-card.dragging {
+            opacity: 0.45;
+            cursor: grabbing;
+        }
+
+        .frame-card.drop-before::before,
+        .frame-card.drop-after::after {
+            content: "";
+            position: absolute;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: #60a5fa;
+            border-radius: 2px;
+            box-shadow: 0 0 6px rgba(96, 165, 250, 0.8);
+            z-index: 5;
+            pointer-events: none;
+        }
+
+        .frame-card.drop-before::before {
+            top: -4px;
+        }
+
+        .frame-card.drop-after::after {
+            bottom: -4px;
+        }
+
+        /* =====================================================
+           IMPORT WORKSPACE
+        ===================================================== */
+
+        .import-layout {
+            display: grid;
+
+            grid-template-columns:
+                minmax(400px, 1fr)
+                280px;
+
+            gap: 20px;
+        }
+
+        .import-preview-outer {
+            min-height: 450px;
+
+            background: #0b1120;
+
+            border: 1px solid #374151;
+            border-radius: 10px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            overflow: hidden;
+
+            position: relative;
+        }
+
+        #import-window {
+            position: relative;
+
+            overflow: hidden;
+
+            background: #ffffff;
+
+            border: 1px dashed #60a5fa;
+        }
+
+        #import-drag-canvas {
+            position: absolute;
+
+            left: 0;
+            top: 0;
+
+            cursor: move;
+
+            touch-action: none;
+
+            image-rendering: auto;
+        }
+
+        /* =====================================================
+           CROP WORKSPACE
+        ===================================================== */
+
+        .crop-layout {
+            display: grid;
+
+            grid-template-columns:
+                minmax(400px, 1fr)
+                280px;
+
+            gap: 20px;
+        }
+
+        .crop-preview {
+            min-height: 450px;
+
+            background: #0b1120;
+
+            border: 1px solid #374151;
+            border-radius: 10px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            overflow: hidden;
+
+            position: relative;
+        }
+
+        #crop-container {
+            position: relative;
+
+            display: inline-block;
+
+            max-width: 100%;
+            max-height: 100%;
+        }
+
+        #crop-canvas {
+            display: block;
+
+            max-width: 100%;
+            max-height: 500px;
+
+            width: auto;
+            height: auto;
+
+            background:
+                repeating-conic-gradient(
+                    #d1d5db 0% 25%,
+                    #ffffff 0% 50%
+                )
+                50% / 16px 16px;
+        }
+
+        #crop-selection {
+            position: absolute;
+
+            left: 0;
+            top: 0;
+
+            width: 100px;
+            height: 100px;
+
+            border: 2px solid #60a5fa;
+
+            background: rgba(37, 99, 235, 0.15);
+
+            display: none;
+
+            cursor: move;
+
+            z-index: 10;
+        }
+
+        #crop-selection.locked {
+            pointer-events: none;
+            border-color: #facc15;
+            background: rgba(250, 204, 21, 0.12);
+        }
+
+        #crop-selection.locked .crop-handle {
+            background: #facc15;
+            border-color: #ca8a04;
+        }
+
+        .crop-handle {
+            position: absolute;
+
+            width: 10px;
+            height: 10px;
+
+            background: #ffffff;
+
+            border: 2px solid #2563eb;
+
+            border-radius: 2px;
+        }
+
+        .handle-nw {
+            left: -6px;
+            top: -6px;
+            cursor: nwse-resize;
+        }
+
+        .handle-ne {
+            right: -6px;
+            top: -6px;
+            cursor: nesw-resize;
+        }
+
+        .handle-sw {
+            left: -6px;
+            bottom: -6px;
+            cursor: nesw-resize;
+        }
+
+        .handle-se {
+            right: -6px;
+            bottom: -6px;
+            cursor: nwse-resize;
+        }
+
+        /* =====================================================
+           CROP CONTROLS
+        ===================================================== */
+
+        .crop-controls {
+            background: #111827;
+
+            border: 1px solid #374151;
+            border-radius: 10px;
+
+            padding: 15px;
+        }
+
+        .control-title {
+            font-size: 15px;
+            font-weight: 600;
+
+            margin-bottom: 15px;
+        }
+
+        .coordinate-grid {
+            display: grid;
+
+            grid-template-columns: 1fr 1fr;
+
+            gap: 10px;
+
+            margin-bottom: 15px;
+        }
+
+        .coordinate {
+            background: #1f2937;
+
+            border: 1px solid #374151;
+
+            border-radius: 6px;
+
+            padding: 10px;
+        }
+
+        .coordinate-label {
+            display: block;
+
+            color: #9ca3af;
+
+            font-size: 11px;
+
+            margin-bottom: 3px;
+        }
+
+        .coordinate-value {
+            font-size: 15px;
+            font-weight: 600;
+        }
+
+        .crop-help {
+            color: #9ca3af;
+
+            font-size: 12px;
+
+            line-height: 1.5;
+
+            margin-top: 15px;
+        }
+
+        /* =====================================================
+           CROP ANIMATION PANEL
+        ===================================================== */
+
+        .crop-anim-panel {
+            margin-top: 15px;
+
+            padding-top: 15px;
+
+            border-top: 1px solid #374151;
+        }
+
+        .crop-anim-panel .control-title {
+            font-size: 13px;
+
+            margin-bottom: 10px;
+        }
+
+        .crop-anim-info {
+            margin-top: 10px;
+
+            color: #9ca3af;
+            font-size: 12px;
+        }
+
+        .crop-anim-info strong {
+            color: #e5e7eb;
+        }
+
+        input[type="color"] {
+            width: 42px;
+            height: 30px;
+
+            padding: 2px;
+
+            border: 1px solid #4b5563;
+            border-radius: 6px;
+
+            background: #111827;
+
+            cursor: pointer;
+        }
+
+        /* =====================================================
+           RESIZE
+        ===================================================== */
+
+        .resize-layout {
+            display: grid;
+
+            grid-template-columns:
+                minmax(400px, 1fr)
+                280px;
+
+            gap: 20px;
+        }
+
+        .resize-preview {
+            min-height: 450px;
+
+            background: #0b1120;
+
+            border: 1px solid #374151;
+            border-radius: 10px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            overflow: hidden;
+
+            position: relative;
+        }
+
+        #resize-preview-canvas {
+            display: block;
+
+            max-width: 100%;
+            max-height: 500px;
+
+            width: auto;
+            height: auto;
+
+            background:
+                repeating-conic-gradient(
+                    #d1d5db 0% 25%,
+                    #ffffff 0% 50%
+                )
+                50% / 16px 16px;
+        }
+
+        .resize-controls {
+            background: #111827;
+
+            border: 1px solid #374151;
+            border-radius: 10px;
+
+            padding: 15px;
+        }
+
+        .resize-input-row {
+            display: grid;
+
+            grid-template-columns: 1fr 1fr;
+
+            gap: 10px;
+
+            margin-bottom: 12px;
+        }
+
+        .resize-input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .resize-input-group label {
+            color: #9ca3af;
+            font-size: 11px;
+        }
+
+        .resize-input-group input[type="number"] {
+            width: 100%;
+
+            padding: 8px 10px;
+
+            border: 1px solid #4b5563;
+            border-radius: 6px;
+
+            background: #1f2937;
+            color: #e5e7eb;
+
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .resize-input-group input[type="number"]:focus {
+            outline: none;
+            border-color: #60a5fa;
+        }
+
+        .resize-input-group input.input-warning {
+            border-color: #f59e0b;
+        }
+
+        .lock-row {
+            display: flex;
+            align-items: center;
+
+            gap: 8px;
+
+            margin: 12px 0;
+
+            color: #9ca3af;
+            font-size: 13px;
+
+            cursor: pointer;
+
+            user-select: none;
+        }
+
+        .lock-row input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+
+            accent-color: #2563eb;
+
+            cursor: pointer;
+        }
+
+        .lock-icon {
+            font-size: 15px;
+        }
+
+        .preset-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+
+            margin-bottom: 12px;
+        }
+
+        .preset-row button {
+            flex: 1;
+
+            min-width: 55px;
+
+            padding: 7px 6px;
+
+            font-size: 12px;
+        }
+
+        .preset-row button.active {
+            background: #2563eb;
+            color: #ffffff;
+        }
+
+        .scale-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+
+            margin-bottom: 12px;
+
+            color: #9ca3af;
+            font-size: 13px;
+        }
+
+        .scale-row input[type="range"] {
+            flex: 1;
+            accent-color: #2563eb;
+        }
+
+        .scale-value {
+            display: inline-block;
+            min-width: 48px;
+
+            color: #60a5fa;
+            font-weight: 600;
+
+            text-align: right;
+        }
+
+        .resize-info {
+            padding: 8px 12px;
+
+            background: #1f2937;
+
+            border: 1px solid #374151;
+            border-radius: 6px;
+
+            color: #9ca3af;
+            font-size: 12px;
+
+            margin-bottom: 12px;
+        }
+
+        .resize-info strong {
+            color: #e5e7eb;
+        }
+
+        .resize-warning {
+            display: none;
+
+            margin-top: 10px;
+
+            padding: 8px 12px;
+
+            background: #451a03;
+
+            border: 1px solid #b45309;
+            border-radius: 6px;
+
+            color: #fbbf24;
+            font-size: 12px;
+            line-height: 1.4;
+        }
+
+        .resize-warning.visible {
+            display: block;
+        }
+
+        /* =====================================================
+           EXPORT
+        ===================================================== */
+
+        .export-source {
+            margin-bottom: 15px;
+
+            padding: 8px 12px;
+
+            background: #111827;
+
+            border: 1px solid #374151;
+            border-radius: 6px;
+
+            color: #9ca3af;
+            font-size: 13px;
+        }
+
+        .export-source strong {
+            color: #60a5fa;
+            font-weight: 600;
+        }
+
+        /* =====================================================
+           OPTIMIZE PANEL
+        ===================================================== */
+
+        .optimize-panel {
+            margin-bottom: 15px;
+
+            padding: 14px 16px;
+
+            background: #0b1120;
+
+            border: 1px solid #374151;
+            border-radius: 10px;
+        }
+
+        .optimize-title {
+            font-size: 14px;
+            font-weight: 600;
+
+            color: #e5e7eb;
+
+            margin-bottom: 12px;
+        }
+
+        .optimize-row {
+            display: flex;
+            align-items: center;
+
+            gap: 8px;
+
+            color: #e5e7eb;
+            font-size: 13px;
+
+            cursor: pointer;
+
+            user-select: none;
+
+            margin-bottom: 10px;
+        }
+
+        .optimize-row input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+
+            accent-color: #2563eb;
+
+            cursor: pointer;
+        }
+
+        .optimize-fields {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+
+            gap: 20px;
+
+            padding: 10px 0;
+
+            border-top: 1px solid #1f2937;
+
+            margin-top: 6px;
+        }
+
+        .optimize-fields.disabled {
+            opacity: 0.4;
+            pointer-events: none;
+        }
+
+        .optimize-field {
+            display: flex;
+            align-items: center;
+
+            gap: 8px;
+
+            color: #9ca3af;
+            font-size: 13px;
+        }
+
+        .optimize-field select {
+            padding: 6px 10px;
+
+            border: 1px solid #4b5563;
+            border-radius: 6px;
+
+            background: #1f2937;
+            color: #e5e7eb;
+
+            font-size: 13px;
+
+            cursor: pointer;
+        }
+
+        .optimize-field select:focus {
+            outline: none;
+            border-color: #60a5fa;
+        }
+
+        .optimize-field input[type="number"] {
+            width: 70px;
+
+            padding: 6px 8px;
+
+            border: 1px solid #4b5563;
+            border-radius: 6px;
+
+            background: #1f2937;
+            color: #e5e7eb;
+
+            font-size: 13px;
+        }
+
+        .optimize-field input[type="number"]:focus {
+            outline: none;
+            border-color: #60a5fa;
+        }
+
+        .optimize-hint {
+            font-size: 11px;
+            color: #6b7280;
+        }
+
+        .optimize-note {
+            margin-top: 10px;
+
+            color: #9ca3af;
+
+            font-size: 11px;
+
+            line-height: 1.5;
+        }
+
+        /* =====================================================
+           EXPORT AREA
+        ===================================================== */
+
+        .export-area {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .export-options {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 20px;
+
+            margin-bottom: 15px;
+
+            color: #9ca3af;
+            font-size: 14px;
+        }
+
+        .export-options label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .export-options input[type="range"] {
+            accent-color: #2563eb;
+        }
+
+        .export-options input[type="checkbox"] {
+            width: 15px;
+            height: 15px;
+            accent-color: #2563eb;
+        }
+
+        /* =====================================================
+           EXPORT COMPARISON TABLE
+        ===================================================== */
+
+        .export-comparison {
+            display: none;
+
+            margin-top: 20px;
+
+            border: 1px solid #374151;
+            border-radius: 10px;
+
+            overflow: hidden;
+
+            background: #0b1120;
+        }
+
+        .export-comparison.visible {
+            display: block;
+        }
+
+        .export-comparison-title {
+            padding: 12px 16px;
+
+            background: #1f2937;
+
+            border-bottom: 1px solid #374151;
+
+            font-size: 14px;
+            font-weight: 600;
+
+            color: #e5e7eb;
+        }
+
+        .export-comparison table {
+            width: 100%;
+
+            border-collapse: collapse;
+
+            font-size: 13px;
+        }
+
+        .export-comparison th,
+        .export-comparison td {
+            padding: 10px 16px;
+
+            text-align: left;
+
+            border-bottom: 1px solid #1f2937;
+        }
+
+        .export-comparison th {
+            color: #9ca3af;
+
+            font-weight: 600;
+
+            font-size: 12px;
+
+            text-transform: uppercase;
+
+            letter-spacing: 0.5px;
+        }
+
+        .export-comparison td {
+            color: #e5e7eb;
+        }
+
+        .export-comparison td.metric-name {
+            color: #9ca3af;
+            font-weight: normal;
+        }
+
+        .export-comparison td.original-value {
+            color: #9ca3af;
+        }
+
+        .export-comparison td.edited-value {
+            color: #60a5fa;
+            font-weight: 600;
+        }
+
+        .export-comparison td.optimized-value {
+            color: #4ade80;
+            font-weight: 600;
+        }
+
+        .export-comparison-diff {
+            padding: 12px 16px;
+
+            background: #111827;
+
+            border-top: 1px solid #374151;
+
+            font-size: 13px;
+
+            line-height: 1.8;
+
+            color: #9ca3af;
+        }
+
+        .export-comparison-diff .diff-line {
+            display: block;
+        }
+
+        .export-comparison-diff .diff-positive {
+            color: #4ade80;
+        }
+
+        .export-comparison-diff .diff-negative {
+            color: #f87171;
+        }
+
+        .export-comparison-diff .diff-neutral {
+            color: #9ca3af;
+        }
+
+        #export-status {
+            color: #9ca3af;
+            font-size: 13px;
+        }
+
+        /* =====================================================
+           APP FOOTER
+        ===================================================== */
+
+        .app-footer {
+            width: 100%;
+
+            padding: 18px 25px;
+
+            background: #0b1120;
+
+            border-top: 1px solid #374151;
+
+            color: #9ca3af;
+            font-size: 12px;
+
+            flex-shrink: 0;
+        }
+
+        .app-footer-inner {
+            max-width: 1500px;
+            margin: 0 auto;
+
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+
+            gap: 12px;
+        }
+
+        .footer-brand {
+            color: #9ca3af;
+        }
+
+        .footer-brand strong {
+            color: #e5e7eb;
+            font-weight: 600;
+        }
+
+        .footer-support {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+
+            gap: 8px;
+
+            color: #9ca3af;
+        }
+
+        .footer-support-label {
+            margin-right: 4px;
+        }
+
+        .support-link {
+            display: inline-flex;
+            align-items: center;
+
+            gap: 5px;
+
+            padding: 5px 12px;
+
+            border-radius: 6px;
+
+            color: #ffffff;
+            text-decoration: none;
+            font-size: 12px;
+            font-weight: 600;
+
+            transition: 0.15s;
+        }
+
+        .support-link.kofi {
+            background: #ff5e5b;
+        }
+
+        .support-link.kofi:hover {
+            background: #ff7a77;
+        }
+
+        .support-link.paypal {
+            background: #0070ba;
+        }
+
+        .support-link.paypal:hover {
+            background: #0091ea;
+        }
+
+        .footer-github {
+            color: #9ca3af;
+            text-decoration: none;
+            font-size: 12px;
+            transition: 0.15s;
+        }
+
+        .footer-github:hover {
+            color: #60a5fa;
+        }
+
+        /* =====================================================
+           SCROLLBAR
+        ===================================================== */
+
+        ::-webkit-scrollbar {
+            width: 9px;
+            height: 9px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #111827;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #4b5563;
+            border-radius: 5px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #6b7280;
+        }
+
+        /* =====================================================
+           RESPONSIVE
+        ===================================================== */
+
+        @media (max-width: 900px) {
+
+            .crop-layout,
+            .import-layout,
+            .resize-layout {
+                grid-template-columns: 1fr;
+            }
+
+            .crop-preview,
+            .import-preview-outer,
+            .resize-preview {
+                min-height: 350px;
+            }
+
+            .tab-bar {
+                top: 70px;
+                padding: 8px 15px;
+            }
+
+            .tab-button {
+                font-size: 12px;
+                padding: 8px 12px;
+            }
+        }
+
+        @media (max-width: 600px) {
+
+            .main {
+                padding: 12px;
+            }
+
+            .header {
+                padding: 12px 15px;
+            }
+
+            .header h1 {
+                font-size: 17px;
+            }
+
+            #frames-grid {
+                grid-template-columns:
+                    repeat(auto-fill, minmax(110px, 1fr));
+            }
+
+            .frame-card canvas {
+                max-height: 100px;
+            }
+
+            .tab-nav button {
+                min-width: auto;
+                padding: 8px 10px;
+                font-size: 12px;
+            }
+
+            .export-comparison th,
+            .export-comparison td {
+                padding: 8px 10px;
+                font-size: 12px;
+            }
+
+            .app-footer-inner {
+                justify-content: center;
+                text-align: center;
+            }
+
+            .footer-support {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- =====================================================
+         HEADER
+    ====================================================== -->
+
+    <header class="header">
+
+        <div class="header-title">
+
+            <div class="logo">
+                <img src="icon.png" alt="GIF Frame Master">
+            </div>
+
+            <div>
+                <h1>GIF Frame Master</h1>
+
+                <div class="header-subtitle">
+                    GIF editor · Frame-by-frame · Crop
+                </div>
+            </div>
+
+        </div>
+
+        <a
+            class="header-link"
+            href="https://cruelben.github.io/"
+            target="_blank"
+            rel="noopener noreferrer"
+        >
+            cruelben.github.io
+        </a>
+
+    </header>
+
+
+    <!-- =====================================================
+         TAB BAR
+    ====================================================== -->
+
+    <nav class="tab-bar" id="tab-bar">
+
+        <button
+            class="tab-button active"
+            data-tab="load"
+            type="button"
+        >
+            1. Load
+        </button>
+
+        <button
+            class="tab-button"
+            data-tab="frames"
+            type="button"
+            disabled
+        >
+            2. Frames
+            <span
+                class="tab-counter"
+                id="tab-counter-frames"
+                style="display:none;"
+            ></span>
+        </button>
+
+        <button
+            class="tab-button"
+            data-tab="import"
+            type="button"
+            disabled
+            title="Available after choosing a GIF to append"
+        >
+            3. Queue
+        </button>
+
+        <button
+            class="tab-button"
+            data-tab="crop"
+            type="button"
+            disabled
+        >
+            4. Crop
+            <span
+                class="tab-counter"
+                id="tab-counter-crop"
+                style="display:none;"
+            ></span>
+            <span
+                class="tab-dot"
+                id="tab-dot-crop"
+                style="display:none;"
+            ></span>
+        </button>
+
+        <button
+            class="tab-button"
+            data-tab="resize"
+            type="button"
+            disabled
+        >
+            5. Resize
+            <span
+                class="tab-counter"
+                id="tab-counter-resize"
+                style="display:none;"
+            ></span>
+            <span
+                class="tab-dot"
+                id="tab-dot-resize"
+                style="display:none;"
+            ></span>
+        </button>
+
+        <button
+            class="tab-button"
+            data-tab="export"
+            type="button"
+            disabled
+        >
+            6. Export
+        </button>
+
+    </nav>
+
+
+    <!-- =====================================================
+         MAIN
+    ====================================================== -->
+
+    <main class="main">
+
+
+        <!-- =================================================
+             TAB 1: LOAD
+        ================================================== -->
+
+        <section
+            class="tab-panel active"
+            data-panel="load"
+        >
+
+            <div class="card" id="file-card">
+
+                <div class="card-header">
+
+                    <h2 class="card-title" id="file-card-title">
+                        1. Load a GIF
+                    </h2>
+
+                    <button
+                        id="clear-all-tab1"
+                        class="danger"
+                        type="button"
+                        title="Remove everything and start over"
+                        style="display:none;"
+                    >
+                        🗑 Clear all
+                    </button>
+
+                </div>
+
+                <div class="file-area" id="file-area">
+
+                    <div class="file-icon">
+                        🎞️
+                    </div>
+
+                    <div class="file-description" id="file-description">
+                        Select an animated GIF to edit
+                    </div>
+
+                    <label for="gif-file" class="file-button" id="gif-file-label">
+                        Select GIF
+                    </label>
+
+                    <input
+                        type="file"
+                        id="gif-file"
+                        accept=".gif,image/gif"
+                    >
+
+                    <span id="loading">
+                        Processing...
+                    </span>
+
+                </div>
+
+                <div class="error-box" id="load-error-box">
+                    <div class="error-title">
+                        Could not load the GIF
+                    </div>
+                    <div id="load-error-message"></div>
+                    <details>
+                        <summary>Technical details</summary>
+                        <pre id="load-error-technical"></pre>
+                    </details>
+                </div>
+
+            </div>
+
+            <div class="tab-nav">
+
+                <button
+                    class="hidden"
+                    type="button"
+                >
+                    ← Back
+                </button>
+
+                <button
+                    class="primary"
+                    type="button"
+                    data-next="frames"
+                    id="tab1-next"
+                    disabled
+                >
+                    Next →
+                </button>
+
+            </div>
+
+        </section>
+
+
+        <!-- =================================================
+             TAB 2: FRAMES
+        ================================================== -->
+
+        <section
+            class="tab-panel"
+            data-panel="frames"
+        >
+
+            <div class="card" id="workspace">
+
+                <h2 class="card-title">
+                    2. Frame management
+                </h2>
+
+                <div class="toolbar">
+
+                    <button
+                        id="clear-all"
+                        class="danger"
+                        type="button"
+                        title="Remove everything and start over"
+                    >
+                        🗑 Clear all
+                    </button>
+
+                    <div class="separator"></div>
+
+                    <button id="select-all" type="button">
+                        Select all
+                    </button>
+
+                    <button id="deselect-all" type="button">
+                        Deselect all
+                    </button>
+
+                    <button id="invert-selection" type="button">
+                        Invert selection
+                    </button>
+
+                    <button id="undo-action" type="button">
+                        ↩ Undo
+                    </button>
+
+                    <div class="separator"></div>
+
+                    <div class="inline-control">
+
+                        <label for="decimate-n">
+                            Every
+                        </label>
+
+                        <input
+                            type="number"
+                            id="decimate-n"
+                            min="2"
+                            max="20"
+                            value="2"
+                        >
+
+                        <button
+                            id="decimate-frames"
+                            type="button"
+                        >
+                            Remove 1 every N
+                        </button>
+
+                    </div>
+
+                    <div class="separator"></div>
+
+                    <div class="inline-control">
+
+                        <button
+                            id="detect-duplicates"
+                            type="button"
+                        >
+                            Detect duplicates
+                        </button>
+
+                        <label for="duplicate-threshold">
+                            Threshold
+                        </label>
+
+                        <input
+                            type="range"
+                            id="duplicate-threshold"
+                            min="0.5"
+                            max="15"
+                            step="0.5"
+                            value="1.5"
+                        >
+
+                        <span
+                            class="threshold-value"
+                            id="duplicate-threshold-value"
+                        >
+                            1.5%
+                        </span>
+
+                    </div>
+
+                    <div class="separator"></div>
+
+                    <button
+                        id="remove-selected"
+                        class="danger"
+                        type="button"
+                    >
+                        Remove selected from view
+                    </button>
+
+                </div>
+
+                <div class="preview-anim">
+
+                    <canvas
+                        id="preview-anim-canvas"
+                        title="Double-click to open 1:1 animated preview"
+                    ></canvas>
+
+                    <div class="preview-anim-info">
+
+                        <button
+                            id="preview-anim-toggle"
+                            class="primary"
+                            type="button"
+                        >
+                            ▶ Play
+                        </button>
+
+                        <div style="margin-top:10px;">
+
+                            Frame:
+                            <strong id="preview-anim-frame">
+                                -
+                            </strong>
+
+                            <br>
+
+                            Delay:
+                            <strong id="preview-anim-delay">
+                                -
+                            </strong>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="frame-info">
+
+                    <span id="frame-count">
+                        0 frames
+                    </span>
+
+                    <span>
+                        Size:
+                        <strong id="gif-dimensions">
+                            -
+                        </strong>
+                    </span>
+
+                    <span class="inline-control">
+
+                        <label for="thumb-size-slider">
+                            Thumbnails
+                        </label>
+
+                        <input
+                            type="range"
+                            id="thumb-size-slider"
+                            min="80"
+                            max="260"
+                            step="10"
+                            value="80"
+                        >
+
+                        <span id="thumb-size-value">
+                            80px
+                        </span>
+
+                    </span>
+
+                </div>
+
+                <div id="frames-grid"></div>
+
+                <div
+                    class="crop-help"
+                    style="margin-top:10px;"
+                >
+                    Double-click a frame to open it at real
+                    size in a new tab.
+                    <br>
+                    Drag a frame (or a selected group)
+                    to reorder them.
+                </div>
+
+            </div>
+
+            <div class="tab-nav">
+
+                <button
+                    type="button"
+                    data-prev="load"
+                >
+                    ← Back
+                </button>
+
+                <button
+                    class="primary"
+                    type="button"
+                    data-next="crop"
+                >
+                    Next →
+                </button>
+
+            </div>
+
+        </section>
+
+
+        <!-- =================================================
+             TAB 3: QUEUE
+        ================================================== -->
+
+        <section
+            class="tab-panel"
+            data-panel="import"
+        >
+
+            <div class="card" id="import-workspace">
+
+                <h2 class="card-title">
+                    3. Add a GIF to the queue
+                </h2>
+
+                <div
+                    class="import-layout"
+                    id="import-panel"
+                >
+
+                    <div class="import-preview-outer">
+
+                        <div id="import-window">
+
+                            <canvas
+                                id="import-drag-canvas"
+                            ></canvas>
+
+                        </div>
+
+                    </div>
+
+                    <div class="crop-controls">
+
+                        <div class="control-title">
+                            Position the frame
+                        </div>
+
+                        <div
+                            class="inline-control"
+                            style="margin-bottom:14px;"
+                        >
+
+                            <label for="import-preview-frame">
+                                Frame:
+                            </label>
+
+                            <input
+                                type="number"
+                                id="import-preview-frame"
+                                min="1"
+                                value="1"
+                                style="width:65px; padding:6px; border-radius:6px; border:1px solid #4b5563; background:#1f2937; color:#e5e7eb;"
+                            >
+
+                            <button
+                                id="import-preview-refresh"
+                                type="button"
+                                title="Refresh preview"
+                            >
+                                ⟳
+                            </button>
+
+                        </div>
+
+                        <div
+                            class="inline-control"
+                            style="margin-bottom:14px;"
+                        >
+
+                            <label for="import-zoom">
+                                Zoom
+                            </label>
+
+                            <input
+                                type="range"
+                                id="import-zoom"
+                                min="0.05"
+                                max="5"
+                                step="0.01"
+                                value="1"
+                            >
+
+                        </div>
+
+                        <div
+                            class="inline-control"
+                            style="margin-bottom:14px;"
+                        >
+
+                            <label for="import-bgcolor">
+                                Background color
+                            </label>
+
+                            <input
+                                type="color"
+                                id="import-bgcolor"
+                                value="#ffffff"
+                            >
+
+                        </div>
+
+                        <div
+                            class="toolbar"
+                            style="margin-bottom:14px;"
+                        >
+
+                            <button
+                                id="import-preset-cover"
+                                type="button"
+                            >
+                                Fit: cover
+                            </button>
+
+                            <button
+                                id="import-preset-contain"
+                                type="button"
+                            >
+                                Fit: contain
+                            </button>
+
+                        </div>
+
+                        <div
+                            class="toolbar"
+                            style="margin-bottom:0;"
+                        >
+
+                            <button
+                                id="import-confirm"
+                                class="success"
+                                type="button"
+                            >
+                                ✔ Confirm and append
+                            </button>
+
+                            <button
+                                id="import-cancel"
+                                class="danger"
+                                type="button"
+                            >
+                                Cancel
+                            </button>
+
+                        </div>
+
+                        <div class="crop-help">
+
+                            Drag the image to position it
+                            and use zoom to scale it up or
+                            down.
+
+                            <br><br>
+
+                            The visible area matches the
+                            size of the already loaded GIF
+                            (<strong id="import-target-dims">-</strong>),
+                            which stays fixed.
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="error-box" id="import-error-box">
+                    <div class="error-title">
+                        Could not append the GIF
+                    </div>
+                    <div id="import-error-message"></div>
+                    <details>
+                        <summary>Technical details</summary>
+                        <pre id="import-error-technical"></pre>
+                    </details>
+                </div>
+
+            </div>
+
+            <div class="tab-nav">
+
+                <button
+                    type="button"
+                    data-prev="frames"
+                >
+                    ← Back
+                </button>
+
+                <button
+                    class="primary"
+                    type="button"
+                    data-next="crop"
+                >
+                    Next →
+                </button>
+
+            </div>
+
+        </section>
+
+
+        <!-- =================================================
+             TAB 4: CROP
+        ================================================== -->
+
+        <section
+            class="tab-panel"
+            data-panel="crop"
+        >
+
+            <div class="card" id="crop-workspace">
+
+                <h2 class="card-title">
+                    4. Crop GIF
+                </h2>
+
+                <div class="crop-layout">
+
+                    <div class="crop-preview">
+
+                        <div id="crop-container">
+
+                            <canvas
+                                id="crop-canvas"
+                            ></canvas>
+
+                            <div id="crop-selection">
+
+                                <div
+                                    class="crop-handle handle-nw"
+                                    data-handle="nw"
+                                ></div>
+
+                                <div
+                                    class="crop-handle handle-ne"
+                                    data-handle="ne"
+                                ></div>
+
+                                <div
+                                    class="crop-handle handle-sw"
+                                    data-handle="sw"
+                                ></div>
+
+                                <div
+                                    class="crop-handle handle-se"
+                                    data-handle="se"
+                                ></div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <div class="crop-controls">
+
+                        <div class="control-title">
+                            Crop area
+                        </div>
+
+                        <div class="coordinate-grid">
+
+                            <div class="coordinate">
+                                <span class="coordinate-label">X</span>
+                                <span class="coordinate-value" id="crop-x">0</span>
+                            </div>
+
+                            <div class="coordinate">
+                                <span class="coordinate-label">Y</span>
+                                <span class="coordinate-value" id="crop-y">0</span>
+                            </div>
+
+                            <div class="coordinate">
+                                <span class="coordinate-label">Width</span>
+                                <span class="coordinate-value" id="crop-width">0</span>
+                            </div>
+
+                            <div class="coordinate">
+                                <span class="coordinate-label">Height</span>
+                                <span class="coordinate-value" id="crop-height">0</span>
+                            </div>
+
+                        </div>
+
+                        <button id="reset-crop" type="button">
+                            Reset crop
+                        </button>
+
+                        <div
+                            class="control-title"
+                            style="margin-top:15px; font-size:13px;"
+                        >
+                            Preview frame
+                        </div>
+
+                        <div class="inline-control">
+
+                            <input
+                                type="number"
+                                id="crop-preview-frame"
+                                min="1"
+                                value="1"
+                                style="width:65px; padding:6px; border-radius:6px; border:1px solid #4b5563; background:#1f2937; color:#e5e7eb;"
+                            >
+
+                            <button
+                                id="crop-preview-refresh"
+                                type="button"
+                                title="Refresh preview"
+                            >
+                                ⟳
+                            </button>
+
+                        </div>
+
+                        <div class="crop-anim-panel">
+
+                            <div class="control-title">
+                                Animated preview
+                            </div>
+
+                            <button
+                                id="crop-anim-toggle"
+                                class="primary"
+                                type="button"
+                            >
+                                ▶ Play
+                            </button>
+
+                            <div class="crop-anim-info">
+
+                                Frame:
+                                <strong id="crop-anim-frame">-</strong>
+
+                                <br>
+
+                                Delay:
+                                <strong id="crop-anim-delay">-</strong>
+
+                            </div>
+
+                        </div>
+
+                        <div class="crop-help">
+
+                            Drag the rectangle to move the
+                            crop area.
+
+                            <br><br>
+
+                            Drag one of the corners to
+                            resize it.
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="tab-nav">
+
+                <button
+                    type="button"
+                    data-prev="frames"
+                >
+                    ← Back
+                </button>
+
+                <button
+                    class="primary"
+                    type="button"
+                    data-next="resize"
+                >
+                    Next →
+                </button>
+
+            </div>
+
+        </section>
+
+
+        <!-- =================================================
+             TAB 5: RESIZE
+        ================================================== -->
+
+        <section
+            class="tab-panel"
+            data-panel="resize"
+        >
+
+            <div class="card" id="resize-workspace">
+
+                <h2 class="card-title">
+                    5. Resize
+                </h2>
+
+                <div class="resize-layout">
+
+                    <div class="resize-preview">
+
+                        <canvas id="resize-preview-canvas"></canvas>
+
+                    </div>
+
+                    <div class="resize-controls">
+
+                        <div class="resize-info">
+                            Current size:
+                            <strong id="resize-current-size">-</strong>
+                        </div>
+
+                        <div class="resize-input-row">
+
+                            <div class="resize-input-group">
+                                <label for="resize-width">
+                                    Width (px)
+                                </label>
+                                <input
+                                    type="number"
+                                    id="resize-width"
+                                    min="1"
+                                    max="4000"
+                                    step="1"
+                                    value="0"
+                                >
+                            </div>
+
+                            <div class="resize-input-group">
+                                <label for="resize-height">
+                                    Height (px)
+                                </label>
+                                <input
+                                    type="number"
+                                    id="resize-height"
+                                    min="1"
+                                    max="4000"
+                                    step="1"
+                                    value="0"
+                                >
+                            </div>
+
+                        </div>
+
+                        <label class="lock-row" for="resize-lock">
+                            <input
+                                type="checkbox"
+                                id="resize-lock"
+                                checked
+                            >
+                            <span class="lock-icon">🔒</span>
+                            Lock aspect ratio
+                        </label>
+
+                        <div class="preset-row">
+                            <button
+                                type="button"
+                                data-preset="100"
+                            >
+                                100%
+                            </button>
+                            <button
+                                type="button"
+                                data-preset="75"
+                            >
+                                75%
+                            </button>
+                            <button
+                                type="button"
+                                data-preset="50"
+                            >
+                                50%
+                            </button>
+                            <button
+                                type="button"
+                                data-preset="25"
+                            >
+                                25%
+                            </button>
+                        </div>
+
+                        <div class="scale-row">
+
+                            <label for="resize-scale">
+                                Scale:
+                            </label>
+
+                            <input
+                                type="range"
+                                id="resize-scale"
+                                min="10"
+                                max="200"
+                                step="1"
+                                value="100"
+                            >
+
+                            <span
+                                class="scale-value"
+                                id="resize-scale-value"
+                            >
+                                100%
+                            </span>
+
+                        </div>
+
+                        <div class="resize-warning" id="resize-warning">
+                            ⚠️ Some values were clamped to the
+                            maximum of 4000 px per side.
+                        </div>
+
+                        <div class="crop-help">
+
+                            Modify Width and Height directly, or
+                            use presets and the slider as shortcuts.
+
+                            <br><br>
+
+                            With <strong>Lock aspect ratio</strong> on,
+                            changing one dimension automatically
+                            updates the other to keep the
+                            original proportions.
+
+                            <br><br>
+
+                            With the lock off, Width and Height
+                            are independent (may distort the image).
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="tab-nav">
+
+                <button
+                    type="button"
+                    data-prev="crop"
+                >
+                    ← Back
+                </button>
+
+                <button
+                    class="primary"
+                    type="button"
+                    data-next="export"
+                >
+                    Next →
+                </button>
+
+            </div>
+
+        </section>
+
+
+        <!-- =================================================
+             TAB 6: EXPORT
+        ================================================== -->
+
+        <section
+            class="tab-panel"
+            data-panel="export"
+        >
+
+            <div class="card" id="export-workspace">
+
+                <h2 class="card-title">
+                    6. Export GIF
+                </h2>
+
+                <div class="export-source">
+                    Source file:
+                    <strong id="export-source-name">-</strong>
+                </div>
+
+                <div class="frame-info">
+
+                    <label for="speed-slider">
+                        <strong>Speed:</strong>
+                    </label>
+
+                    <input
+                        type="range"
+                        id="speed-slider"
+                        min="0.5"
+                        max="2"
+                        step="0.1"
+                        value="1"
+                    >
+
+                    <span id="speed-value">1.0x</span>
+
+                    <span id="speed-delay-preview"></span>
+
+                </div>
+
+                <div class="export-options">
+
+                    <label for="pingpong-toggle">
+
+                        <input
+                            type="checkbox"
+                            id="pingpong-toggle"
+                        >
+
+                        Ping-pong effect (back and forth)
+
+                    </label>
+
+                    <label for="export-quality">
+
+                        Quality/size:
+
+                        <input
+                            type="range"
+                            id="export-quality"
+                            min="1"
+                            max="20"
+                            step="1"
+                            value="10"
+                        >
+
+                        <span id="export-quality-value">10</span>
+
+                        <span style="font-size:12px;">
+                            (1 = high quality, 20 = lighter)
+                        </span>
+
+                    </label>
+
+                </div>
+
+                <div class="optimize-panel">
+
+                    <div class="optimize-title">
+                        ⚙️ Optimization (Gifsicle)
+                    </div>
+
+                    <label class="optimize-row" for="optimize-toggle">
+
+                        <input
+                            type="checkbox"
+                            id="optimize-toggle"
+                            checked
+                        >
+
+                        Optimize with Gifsicle
+                        <span style="color:#4ade80;">
+                            (recommended)
+                        </span>
+
+                    </label>
+
+                    <div
+                        class="optimize-fields"
+                        id="optimize-fields"
+                    >
+
+                        <div class="optimize-field">
+
+                            <label for="optimize-level">
+                                Level:
+                            </label>
+
+                            <select id="optimize-level">
+
+                                <option value="lossless">
+                                    Lossless (dirty rectangle only)
+                                </option>
+
+                                <option value="light">
+                                    Light (lossy 20)
+                                </option>
+
+                                <option value="balanced" selected>
+                                    Balanced (lossy 40)
+                                </option>
+
+                                <option value="aggressive">
+                                    Aggressive (lossy 80)
+                                </option>
+
+                                <option value="extreme">
+                                    Extreme (lossy 80 · 128 colors · dither)
+                                </option>
+
+                                <option value="custom">
+                                    Custom (use values below)
+                                </option>
+
+                            </select>
+
+                        </div>
+
+                        <div class="optimize-field">
+
+                            <label for="optimize-lossy">
+                                Lossy:
+                            </label>
+
+                            <input
+                                type="number"
+                                id="optimize-lossy"
+                                min="1"
+                                max="200"
+                                step="1"
+                                value="40"
+                            >
+
+                            <span class="optimize-hint">
+                                (1 = perfect · 200 = tiny)
+                            </span>
+
+                        </div>
+
+                        <div class="optimize-field">
+
+                            <label for="optimize-colors">
+                                Colors:
+                            </label>
+
+                            <select id="optimize-colors">
+
+                                <option value="256" selected>
+                                    256
+                                </option>
+
+                                <option value="128">
+                                    128
+                                </option>
+
+                                <option value="64">
+                                    64
+                                </option>
+
+                                <option value="32">
+                                    32
+                                </option>
+
+                            </select>
+
+                        </div>
+
+                        <div class="optimize-field">
+
+                            <label for="optimize-dither">
+
+                                <input
+                                    type="checkbox"
+                                    id="optimize-dither"
+                                    checked
+                                >
+
+                                Dither
+                            </label>
+
+                        </div>
+
+                    </div>
+
+                    <div class="optimize-note">
+
+                        Gifsicle applies dirty-rectangle
+                        compression, per-frame palette
+                        optimization and LZW tuning — often
+                        reducing file size by 30–60% compared
+                        to the raw encoder output.
+
+                        <br><br>
+
+                        <strong>Colors</strong>: number of colors
+                        in the palette. 256 = max (GIF format
+                        limit). Lower = smaller file but more
+                        banding.
+
+                        <br>
+
+                        <strong>Dither</strong>: applies dithering
+                        to reduce visible banding at low color
+                        counts. Slightly larger file but smoother
+                        gradients.
+
+                    </div>
+
+                </div>
+
+                <div class="export-area">
+
+                    <button
+                        id="export-gif"
+                        class="success"
+                        type="button"
+                    >
+                        Create new GIF
+                    </button>
+
+                    <span id="export-status"></span>
+
+                </div>
+
+                <div class="error-box" id="export-error-box">
+                    <div class="error-title">
+                        Could not create the GIF
+                    </div>
+                    <div id="export-error-message"></div>
+                    <details>
+                        <summary>Technical details</summary>
+                        <pre id="export-error-technical"></pre>
+                    </details>
+                </div>
+
+                <div
+                    class="export-comparison"
+                    id="export-comparison"
+                >
+
+                    <div class="export-comparison-title">
+                        📊 Export result — Original vs Edited
+                    </div>
+
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Metric</th>
+                                <th>Original</th>
+                                <th>Edited</th>
+                                <th>Optimized</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="metric-name">Frames</td>
+                                <td class="original-value" id="cmp-frames-orig">-</td>
+                                <td class="edited-value" id="cmp-frames-new">-</td>
+                                <td class="optimized-value" id="cmp-frames-opt">-</td>
+                            </tr>
+                            <tr>
+                                <td class="metric-name">Dimensions</td>
+                                <td class="original-value" id="cmp-dims-orig">-</td>
+                                <td class="edited-value" id="cmp-dims-new">-</td>
+                                <td class="optimized-value" id="cmp-dims-opt">-</td>
+                            </tr>
+                            <tr>
+                                <td class="metric-name">Output size</td>
+                                <td class="original-value">—</td>
+                                <td class="edited-value" id="cmp-outsize-new">-</td>
+                                <td class="optimized-value" id="cmp-outsize-opt">-</td>
+                            </tr>
+                            <tr>
+                                <td class="metric-name">Scale</td>
+                                <td class="original-value">—</td>
+                                <td class="edited-value" id="cmp-scale-new">-</td>
+                                <td class="optimized-value" id="cmp-scale-opt">-</td>
+                            </tr>
+                            <tr>
+                                <td class="metric-name">File size</td>
+                                <td class="original-value" id="cmp-size-orig">-</td>
+                                <td class="edited-value" id="cmp-size-new">-</td>
+                                <td class="optimized-value" id="cmp-size-opt">-</td>
+                            </tr>
+                            <tr>
+                                <td class="metric-name">Duration</td>
+                                <td class="original-value" id="cmp-duration-orig">-</td>
+                                <td class="edited-value" id="cmp-duration-new">-</td>
+                                <td class="optimized-value" id="cmp-duration-opt">-</td>
+                            </tr>
+                            <tr>
+                                <td class="metric-name">Avg. frame delay</td>
+                                <td class="original-value" id="cmp-delay-orig">-</td>
+                                <td class="edited-value" id="cmp-delay-new">-</td>
+                                <td class="optimized-value" id="cmp-delay-opt">-</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div
+                        class="export-comparison-diff"
+                        id="export-comparison-diff"
+                    ></div>
+
+                </div>
+
+                <img
+                    id="export-preview"
+                    alt="Exported GIF preview"
+                >
+
+            </div>
+
+            <div class="tab-nav">
+
+                <button
+                    type="button"
+                    data-prev="resize"
+                >
+                    ← Back
+                </button>
+
+                <button
+                    class="hidden"
+                    type="button"
+                >
+                    Next →
+                </button>
+
+            </div>
+
+        </section>
+
+
+    </main>
+
+
+    <!-- =====================================================
+         APP FOOTER
+    ====================================================== -->
+
+    <footer class="app-footer">
+
+        <div class="app-footer-inner">
+
+            <div class="footer-brand">
+                <strong>GIF Frame Master</strong>
+                · Made by cruelben
+            </div>
+
+            <div class="footer-support">
+
+                <span class="footer-support-label">
+                    Support the project:
+                </span>
+
+                <a
+                    class="support-link kofi"
+                    href="https://ko-fi.com/cruelben"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                >
+                    ☕ Ko-fi
+                </a>
+
+                <a
+                    class="support-link paypal"
+                    href="https://paypal.me/bben"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                >
+                    💳 PayPal
+                </a>
+
+            </div>
+
+            <a
+                class="footer-github"
+                href="https://cruelben.github.io/"
+                target="_blank"
+                rel="noopener noreferrer"
+            >
+                cruelben.github.io
+            </a>
+
+        </div>
+
+    </footer>
+
+
+    <!-- =====================================================
+         LOCAL LIBRARIES
+    ====================================================== -->
+
+    <script src="gifuct-js.min.js"></script>
+
+    <script src="gifshot.min.js"></script>
+
+    <script src="gifsicle.min.js"></script>
+
+    <!-- =====================================================
+         APPLICATION
+    ====================================================== -->
+
+    <script src="app.js"></script>
+
+</body>
+</html>

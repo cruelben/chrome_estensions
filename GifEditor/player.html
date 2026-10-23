@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <title>Animated preview</title>
+
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            background: #111827;
+            color: #e5e7eb;
+            font-family: Arial, Helvetica, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 14px;
+        }
+
+        /* Contenitore del canvas: relativo per posizionare
+           il badge overlay in alto a destra */
+
+        .player-stage {
+            position: relative;
+            display: inline-block;
+            max-width: 95vw;
+            max-height: 78vh;
+        }
+
+        canvas {
+            display: block;
+            max-width: 95vw;
+            max-height: 78vh;
+            width: auto;
+            height: auto;
+            background:
+                repeating-conic-gradient(
+                    #d1d5db 0% 25%,
+                    #ffffff 0% 50%
+                )
+                50% / 20px 20px;
+            image-rendering: pixelated;
+            border-radius: 6px;
+        }
+
+        /* Badge con il numero del frame corrente.
+           Sempre visibile sopra il canvas.
+           pointer-events: none per non intralciare click. */
+
+        .frame-number-badge {
+            position: absolute;
+            top: 14px;
+            right: 14px;
+
+            padding: 6px 18px;
+
+            background: rgba(0, 0, 0, 0.35);
+            border-radius: 10px;
+
+            color: rgba(255, 255, 255, 0.75);
+            font-family: monospace;
+            font-size: 44px;
+            font-weight: 700;
+            letter-spacing: 1px;
+
+            text-shadow:
+                0 2px 6px rgba(0, 0, 0, 0.85),
+                0 0 2px rgba(0, 0, 0, 0.9);
+
+            pointer-events: none;
+            user-select: none;
+
+            transition: opacity 0.2s;
+        }
+
+        /* Quando il player è in riproduzione, il numero
+           diventa più tenue per non distrarre */
+
+        .frame-number-badge.playing {
+            color: rgba(255, 255, 255, 0.5);
+            background: rgba(0, 0, 0, 0.22);
+        }
+
+        /* Slider frame */
+
+        .slider-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            width: 95vw;
+            max-width: 900px;
+            color: #9ca3af;
+            font-size: 13px;
+        }
+
+        .slider-row input[type="range"] {
+            flex: 1;
+            accent-color: #2563eb;
+        }
+
+        .slider-row strong {
+            color: #e5e7eb;
+            min-width: 80px;
+            text-align: right;
+        }
+
+        /* Controlli Play / info frame */
+
+        .player-controls {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            font-size: 14px;
+        }
+
+        button {
+            border: none;
+            border-radius: 7px;
+            padding: 9px 18px;
+            background: #2563eb;
+            color: #ffffff;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: 0.15s;
+        }
+
+        button:hover {
+            background: #1d4ed8;
+        }
+
+        .info {
+            color: #9ca3af;
+            font-size: 13px;
+        }
+
+        .info strong {
+            color: #e5e7eb;
+        }
+
+        /* Riga velocità con bottoni preset */
+
+        .speed-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #9ca3af;
+            font-size: 13px;
+        }
+
+        .speed-row .speed-btn {
+            background: #374151;
+            color: #e5e7eb;
+            font-weight: 600;
+            padding: 7px 14px;
+            font-size: 13px;
+        }
+
+        .speed-row .speed-btn:hover {
+            background: #4b5563;
+        }
+
+        .speed-row .speed-btn.active {
+            background: #2563eb;
+            color: #ffffff;
+        }
+
+        /* Stato di caricamento */
+
+        .loading-msg {
+            color: #9ca3af;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="player-stage">
+    <canvas id="player"></canvas>
+
+    <div
+        class="frame-number-badge"
+        id="frameBadge"
+    >
+        #1
+    </div>
+</div>
+
+<div class="slider-row">
+    <input
+        type="range"
+        id="frameSlider"
+        min="0"
+        max="0"
+        step="1"
+        value="0"
+    >
+    <strong id="sliderLabel">- / -</strong>
+</div>
+
+<div class="player-controls">
+    <button id="playBtn">&#9654; Play</button>
+    <div class="info">
+        Frame: <strong id="frameLabel">-</strong>
+        &nbsp;·&nbsp;
+        Delay: <strong id="delayLabel">-</strong>
+    </div>
+</div>
+
+<div class="speed-row">
+    <span>Speed:</span>
+    <button class="speed-btn" data-speed="0.25">0.25x</button>
+    <button class="speed-btn active" data-speed="0.5">0.5x</button>
+    <button class="speed-btn" data-speed="1">1x</button>
+</div>
+
+<!-- Script esterno: la CSP dell'estensione permette
+     gli script da file locali dell'estensione -->
+
+<script src="player.js"></script>
+
+</body>
+</html>
