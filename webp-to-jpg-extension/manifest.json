@@ -1,8 +1,9 @@
 {
   "manifest_version": 3,
   "name": "Salva WebP in JPG",
-  "version": "2.0",
-  "description": "Converte e salva direttamente le immagini WebP in JPG con nome personalizzato.",
+  "version": "5.4",
+  "description": "Converte e salva immagini WebP/GIF in JPG o nella cartella animazioni scelta.",
+  "minimum_chrome_version": "116",
   "icons": {
     "16": "icon.png",
     "48": "icon.png",
@@ -10,11 +11,18 @@
   },
   "action": {
     "default_icon": "icon.png",
-    "default_title": "Salva WebP in JPG"
+    "default_title": "Configura Salva WebP in JPG"
+  },
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
   },
   "permissions": [
     "contextMenus",
     "downloads",
+    "storage",
+    "notifications",
+    "offscreen",
     "scripting"
   ],
   "host_permissions": [
@@ -22,6 +30,15 @@
     "https://*/*"
   ],
   "background": {
-    "service_worker": "background.js"
-  }
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": ["http://*/*", "https://*/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle",
+      "all_frames": true
+    }
+  ]
 }
