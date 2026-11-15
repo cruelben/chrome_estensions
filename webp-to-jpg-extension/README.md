@@ -1,53 +1,50 @@
-# Riepilogo Tecnico e Reset Prompt: Estensione Chrome "Salva WebP in JPG" (v5.5)
+# Technical Summary and Reset Prompt: "Salva WebP in JPG" Chrome Extension (v5.5)
 
-Questo documento contiene il riepilogo completo e il codice finale dell'estensione Chrome su cui abbiamo lavorato. Può essere usato come "prompt di reset" per iniziare una nuova sessione di sviluppo senza perdere il contesto.
+This document contains the complete summary and final code of the Chrome extension we've been working on. It can be used as a "reset prompt" to start a new development session without losing context.
 
-## 1. Obiettivo del Progetto
-Estensione per Google Chrome (Manifest V3) che permette di:
-*   Salvare immagini WebP, GIF, PNG, JPG, APNG, AVIF tramite il menu contestuale (tasto destro) o tramite un'icona rapida fluttuante al passaggio del mouse.
-*   **Conversione automatica in JPG**: le immagini statiche vengono convertite in JPG (sfondo bianco per gestire le trasparenze di PNG/WebP). I file già JPG non vengono ricompressi.
-*   **Rilevamento e conversione animazioni**: riconosce GIF, WebP, APNG e AVIF animate. Se l'opzione è attiva, le animazioni non-GIF vengono convertite in GIF animata tramite la libreria `gifenc`.
-*   **Due cartelle di destinazione configurabili**: una per le immagini statiche (JPG) e una per le animazioni (GIF/WebP), salvate silenziosamente senza dialog quando configurate e valide.
-*   **Selezione automatica della cartella al primo utilizzo o se quella configurata non è più valida**: se manca una cartella per una categoria (JPG o anim), oppure se quella salvata non è più raggiungibile (cancellata, rinominata, spostata), si apre automaticamente una piccola finestra popup dove scegliere la cartella di destinazione. La scelta viene salvata automaticamente nelle Opzioni per quella categoria, con un avviso (notifica di sistema) che informa l'utente la prima volta.
-*   **Icona Rapida (Quick Action)**: mostra un'icona di download fluttuante sulle immagini più grandi di una certa dimensione (configurabile, default 300×300) per salvarle con un solo click, senza passare dal menu contestuale.
-*   **Notifiche di sistema**: notifica di successo o di errore al termine di ogni operazione, inclusa la notifica di "cartella impostata automaticamente" quando viene usato il picker.
+## 1. Project Goal
+A Chrome extension (Manifest V3) that allows you to:
+*   Save WebP, GIF, PNG, JPG, APNG, and AVIF images via the context menu (right-click) or via a floating quick-action icon.
+*   **Automatic conversion to JPG**: static images are converted to JPG (with a white background to handle PNG/WebP transparency). Files that are already JPG are not re-compressed.
+*   **Animation detection and conversion**: recognizes animated GIF, WebP, APNG, and AVIF. If the option is enabled, non-GIF animations are converted into an animated GIF using the `gifenc` library.
+*   **Two configurable destination folders**: one for static images (JPG) and one for animations (GIF/WebP), saved silently without a dialog when configured and valid.
+*   **Automatic folder selection on first use or when the configured folder is no longer valid**: if a folder for a category (JPG or anim) is missing, or if the saved one is no longer reachable (deleted, renamed, moved), a small popup window automatically opens to choose the destination folder. The choice is automatically saved in Options for that category, with a one-time notice (system notification) informing the user.
+*   **Quick Action icon**: shows a floating download icon on images larger than a certain size (configurable, default 300×300) to save them with a single click, without going through the context menu.
+*   **System notifications**: success or error notification at the end of each operation, including the "folder automatically set" notification when the picker is used.
 
-## 2. Architettura e Struttura
-L'estensione è composta dai seguenti file:
+## 2. Architecture and Structure
+The extension is made up of the following files:
 
-| File | Ruolo |
+| File | Role |
 |---|---|
-| `manifest.json` | Definisce permessi, azione, pagina opzioni, content script e service worker. |
-| `background.js` | Service Worker. Coordina il salvataggio: riceve il click dal menu contestuale o dall'icona overlay, controlla la validità delle cartelle configurate, invia l'immagine all'offscreen document per l'elaborazione, e se manca una cartella valida apre la finestra popup (`picker.html`) per sceglierne una nuova. Gestisce anche le notifiche di successo/errore. |
-| `offscreen.js` / `offscreen.html` | Documento invisibile (richiesto in MV3 perché il service worker non ha accesso a Canvas/DOM). Esegue il fetch dell'immagine, la sniffa per riconoscerne il formato, rileva se è animata, converte in JPG o GIF a seconda dei casi, e scrive il file nella cartella configurata. Se la scrittura fallisce perché la cartella non è più raggiungibile, restituisce un fallback invece di generare un errore, così il flusso passa automaticamente al picker. |
-| `gifenc.esm.js` | Libreria esterna per la codifica delle GIF animate (quantizzazione colori + encoding LZW). |
-| `idb.js` | Wrapper per IndexedDB, usato per memorizzare in modo persistente i riferimenti alle due cartelle (`FileSystemDirectoryHandle`) e i dati dell'ultimo salvataggio. |
-| `overlay.js` | Content script iniettato in ogni pagina web (`all_frames: true`). Mostra l'icona flottante quando il mouse passa sopra un'immagine abbastanza grande, e invia il comando di salvataggio al background quando viene cliccata. Legge le impostazioni (colore/posizione icona, dimensione minima) da `chrome.storage.local` e si aggiorna in tempo reale se cambiano. |
-| `options.html` / `options.js` | Pagina di configurazione dell'estensione (apribile cliccando sull'icona dell'estensione). Permette di: scegliere manualmente le due cartelle, rimuoverle, attivare/disattivare l'icona rapida e impostarne la dimensione minima, scegliere colore e posizione dell'icona, attivare/disattivare la conversione automatica in GIF, e vedere i dettagli dell'ultimo salvataggio. Le cartelle mostrate qui si aggiornano automaticamente anche quando vengono impostate tramite il picker, perché entrambi leggono/scrivono dalla stessa fonte (IndexedDB). |
-| `picker.html` / `picker.js` | **Nuovi file.** Pagina mostrata in una piccola finestra popup quando manca una cartella valida per la categoria richiesta (JPG o GIF/animazioni). Permette di scegliere la cartella tramite il selettore nativo di Chrome (`showDirectoryPicker`); la cartella scelta viene salvata automaticamente nelle Opzioni per quella categoria, il file in sospeso viene salvato al suo interno, e vengono mostrate due notifiche: una che avvisa che la cartella è stata impostata e quella classica di conferma salvataggio. Lo sfondo della finestra è arancione tenue, coerente con il colore dell'icona dell'estensione. |
+| `manifest.json` | Defines permissions, the action, the options page, content script, and service worker. |
+| `background.js` | Service Worker. Coordinates saving: receives the click from the context menu or the overlay icon, checks the validity of the configured folders, sends the image to the offscreen document for processing, and if no valid folder is found, opens the popup window (`picker.html`) to choose a new one. Also handles success/error notifications. |
+| `offscreen.js` / `offscreen.html` | Invisible document (required in MV3 because the service worker has no access to Canvas/DOM). Fetches the image, sniffs its format, detects whether it's animated, converts it to JPG or GIF as needed, and writes the file to the configured folder. If writing fails because the folder is no longer reachable, it returns a fallback instead of raising an error, so the flow automatically moves on to the picker. |
+| `gifenc.esm.js` | External library for encoding animated GIFs (color quantization + hand-written LZW encoding). |
+| `idb.js` | IndexedDB wrapper, used to persistently store the references to the two folders (`FileSystemDirectoryHandle`) and the data of the last save. |
+| `overlay.js` | Content script injected into every web page (`all_frames: true`). Shows the floating icon when the mouse hovers over a large enough image, and sends the save command to the background when clicked. Reads settings (icon color/position, minimum size) from `chrome.storage.local` and updates live if they change. |
+| `options.html` / `options.js` | The extension's configuration page (opened by clicking the extension icon). Lets you: manually choose the two folders, remove them, enable/disable the quick-action icon and set its minimum size, choose the icon's color and position, enable/disable automatic GIF conversion, and view details of the last save. The folders shown here update automatically even when set via the picker, since both read/write from the same source (IndexedDB). |
+| `picker.html` / `picker.js` | **New files.** Page shown in a small popup window when no valid folder is set for the requested category (JPG or GIF/animations). Lets the user choose the folder via Chrome's native picker (`showDirectoryPicker`); the chosen folder is automatically saved in Options for that category, the pending file is saved inside it, and two notifications are shown: one informing that the folder has been set, and the classic save-confirmation one. The window background is a soft orange, matching the extension's icon color. |
 
-### File non più utilizzati
-*   `content.js`: era il vecchio meccanismo di fallback "Salva con nome" (tramite tag `<a download>` iniettato nella pagina). Non è più necessario dato che il nuovo fallback passa dal picker con `showDirectoryPicker`, e può essere eliminato dal progetto.
+## 3. Save Flow (updated)
+1.  The user right-clicks an image (context menu) or clicks the floating quick-action icon (overlay).
+2.  `background.js` checks whether a valid folder exists (handle present **and** permission still granted) for the relevant category (static or animated).
+3.  The image is sent to the offscreen document (`offscreen.js`), which downloads it, analyzes it, and converts it to the correct format (JPG for static images, GIF for animations if the option is enabled).
+4.  **Case A — valid and reachable folder**: the file is written directly to the folder, with a success notification.
+5.  **Case B — missing folder, or configured but no longer reachable** (e.g. deleted or renamed): `offscreen.js` catches the write error, and the result comes back as a "fallback". `background.js` temporarily stores the file (as a Data URL) in `chrome.storage.session` and opens `picker.html` in a popup window.
+6.  In the popup, the user chooses the destination folder. The choice is saved in Options (IndexedDB) for that category, the pending file is written there, and the notifications are shown ("Folder set" + "Save successful!").
+7.  If the user cancels the folder selection, no file is saved; the check restarts from scratch on the next save attempt.
 
-## 3. Flusso di Salvataggio (aggiornato)
-1.  L'utente clicca col tasto destro su un'immagine (menu contestuale) oppure clicca sull'icona rapida flottante (overlay).
-2.  `background.js` controlla se esiste una cartella valida (handle presente **e** permesso ancora concesso) per la categoria corrispondente (statica o animata).
-3.  L'immagine viene inviata all'offscreen document (`offscreen.js`), che la scarica, la analizza, e la converte nel formato corretto (JPG per le statiche, GIF per le animazioni se l'opzione è attiva).
-4.  **Caso A — cartella valida e raggiungibile**: il file viene scritto direttamente nella cartella, con notifica di successo.
-5.  **Caso B — cartella mancante, oppure configurata ma non più raggiungibile** (es. cancellata o rinominata): `offscreen.js` intercetta l'errore di scrittura, e il risultato torna come "fallback". `background.js` salva temporaneamente il file (come Data URL) in `chrome.storage.session` e apre `picker.html` in una finestra popup.
-6.  Nel popup, l'utente sceglie la cartella di destinazione. La scelta viene salvata nelle Opzioni (IndexedDB) per quella categoria, il file in sospeso viene scritto lì, e vengono mostrate le notifiche ("Cartella impostata" + "Salvataggio riuscito!").
-7.  Se l'utente annulla la selezione della cartella, nessun file viene salvato; al prossimo tentativo di salvataggio il controllo riparte da zero.
+## 4. Technical Choices and Constraints (Fixed Bugs)
+*   **File corruption**: fixed by using Data URL strings to pass files between offscreen and background, avoiding ArrayBuffer corruption.
+*   **JPG transparency**: the canvas is filled white (`#ffffff`) before drawing the image.
+*   **WebP/APNG/AVIF → GIF bug (OffscreenCanvas)**: `track.codedWidth` returned `undefined`, causing a crash; fixed by decoding the first frame and using `image.displayWidth`/`image.displayHeight`. For APNG, Chrome's `ImageDecoder` doesn't recognize the `image/apng` mime type: `image/png` is passed to the decoder instead.
+*   **Folder no longer reachable**: `queryPermission` can still return "granted" even if the physical folder has been deleted or renamed in the meantime. Fixed by catching the error at the moment of actually writing the file (`getFileHandle`/`createWritable`) and redirecting to the fallback (picker) instead of raising a visible error to the user.
+*   **`showDirectoryPicker` requires a real, immediate user interaction**: it cannot be invoked directly from the service worker or after long asynchronous operations (fetch, conversion). Fixed by opening a dedicated popup window (`picker.html`), which is a standalone extension page: clicking the "Choose folder…" button inside it is a valid user interaction in the right context.
+*   **Extension context invalidated**: a normal error that appears in content scripts (`overlay.js`) already injected into a page when the extension is manually reloaded during development (`chrome://extensions` → reload). Not a bug: just reload the test web page too after each extension reload.
+*   **Folder permissions**: Chrome can revoke write permissions after a browser restart; in that case the configured folder will be reported as "invalid" and the picker will automatically prompt for a new selection.
 
-## 4. Scelte Tecniche e Vincoli (Bug Risolti)
-*   **Corruzione dei file**: risolto usando stringhe DataURL per passare i file tra offscreen e background, evitando la corruzione degli ArrayBuffer.
-*   **Trasparenza JPG**: il canvas viene riempito di bianco (`#ffffff`) prima di disegnare l'immagine.
-*   **Bug WebP/APNG/AVIF → GIF (OffscreenCanvas)**: `track.codedWidth` restituiva `undefined` causando un crash; risolto decodificando il primo frame e usando `image.displayWidth`/`image.displayHeight`. Per gli APNG, `ImageDecoder` di Chrome non riconosce il mime `image/apng`: viene passato `image/png` al decoder.
-*   **Cartella non più raggiungibile**: `queryPermission` può restituire "granted" anche se la cartella fisica è stata cancellata o rinominata nel frattempo. Risolto intercettando l'errore al momento della scrittura effettiva del file (`getFileHandle`/`createWritable`) e reindirizzando al fallback (picker) invece di generare un errore visibile all'utente.
-*   **`showDirectoryPicker` richiede un'interazione utente reale e immediata**: non può essere invocato direttamente dal service worker o dopo operazioni asincrone lunghe (fetch, conversione). Risolto aprendo una finestra popup dedicata (`picker.html`), che è una pagina dell'estensione a sé stante: il click sul pulsante "Scegli cartella…" al suo interno è un'interazione utente valida nel contesto giusto.
-*   **Extension context invalidated**: errore normale che appare negli script di content (`overlay.js`) già iniettati in una pagina quando l'estensione viene ricaricata manualmente durante lo sviluppo (`chrome://extensions` → reload). Non è un bug: basta ricaricare anche la pagina web di test dopo ogni reload dell'estensione.
-*   **Permessi Cartelle**: Chrome può revocare i permessi di scrittura dopo un riavvio del browser; in tal caso la cartella configurata risulterà "non valida" e scatterà automaticamente la richiesta di nuova selezione tramite il picker.
-
-## 5. Il Codice Completo
+## 5. Full Code
 
 ### `manifest.json`
 ```json
@@ -1062,8 +1059,7 @@ async function choose() {
 }
 ```
 
-## 6. Cosa resta da fare (Opzionale)
-*   **Icone**: i file `icon.png` e le icone a 16/48/128px attualmente puntano allo stesso file base; andrebbero esportate nelle dimensioni corrette per una resa migliore.
-*   **Limiti GIF**: la conversione in GIF non ha un limite di frame. Per animazioni molto lunghe, la GIF risultante potrebbe essere pesante o causare rallentamenti. Si potrebbe aggiungere un limite massimo di frame (es. 300).
-*   **Supporto Video**: esplicitamente escluso per limiti tecnici (i video non sono immagini e richiederebbero API di registrazione schermo).
-*   **Pulizia file obsoleti**: il file `content.js` (vecchio fallback "Salva con nome") non è più referenziato nel `manifest.json` e può essere rimosso dal progetto.
+## 6. Remaining To-Dos (Optional)
+*   **Icons**: the `icon.png` file and the 16/48/128px icons currently all point to the same base file; they should be exported at the correct sizes for a better result.
+*   **GIF frame limit**: GIF conversion has no frame limit. For very long animations, the resulting GIF could be heavy or cause slowdowns. A maximum frame limit (e.g. 300) could be added.
+*   **Video support**: explicitly excluded due to technical constraints (videos aren't images and would require screen-recording APIs).
