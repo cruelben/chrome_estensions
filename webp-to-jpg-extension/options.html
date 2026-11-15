@@ -19,7 +19,14 @@
   .info { font-size: 13px; margin: 6px 0; color: #444; }
   .info b { color: #222; }
   hr { border: 0; border-top: 1px solid #eee; margin: 20px 0; }
-  input[type="number"] { padding: 6px; border: 1px solid #ccc; border-radius: 6px; width: 80px; font: inherit; }
+  .radio-group { display: flex; flex-direction: column; gap: 6px; }
+  .radio-group label { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+  .radio-group input[type="radio"] { accent-color: #0b57d0; }
+  .input-row { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
+  .input-row input[type="number"] { padding: 6px 10px; border: 1px solid #ccc; border-radius: 6px; width: 100px; font: inherit; }
+  .checkbox-label { display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 600; }
+  .checkbox-label input[type="checkbox"] { accent-color: #0b57d0; width: 18px; height: 18px; }
+  .desc { font-size: 13px; color: #555; margin-bottom: 12px; }
 </style>
 </head>
 <body>
@@ -45,24 +52,39 @@
 
   <div class="card">
     <span class="label">Icona rapida sulle immagini</span>
-    <div class="info" style="margin-bottom: 10px;">Se attivo, passando il mouse sulle immagini apparirà un'icona per salvarle al volo senza usare il tasto destro.</div>
-    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 600; margin-bottom: 10px;">
-      <input type="checkbox" id="toggle-quick-action" style="width: 18px; height: 18px; cursor: pointer;"> 
-      Abilita icona rapida
+    <div class="desc">Se attivo, passando il mouse sulle immagini apparirà un'icona per salvarle al volo senza usare il tasto destro.</div>
+    <label class="checkbox-label">
+      <input type="checkbox" id="enable-overlay"> Abilita icona rapida
     </label>
-    <div style="display: flex; align-items: center; gap: 8px;">
-      <label for="min-size-input" style="font-weight: 600;">Dimensione minima (px):</label>
-      <input type="number" id="min-size-input" value="300" min="10" max="5000">
+    <div class="input-row">
+      <label for="min-image-size">Dimensione minima (px):</label>
+      <input type="number" id="min-image-size" min="16" step="10" value="300">
     </div>
   </div>
 
   <div class="card">
-    <span class="label">Converti WebP animate in GIF</span>
-    <div class="info" style="margin-bottom: 10px;">Se attivo, le WebP animate verranno convertite in GIF animate prima del salvataggio.</div>
-    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 600;">
-      <input type="checkbox" id="toggle-webp-gif" style="width: 18px; height: 18px; cursor: pointer;" checked> 
-      Abilita conversione WebP → GIF
+    <span class="label">Converti animazioni in GIF</span>
+    <div class="desc">Se attivo, le animazioni (WebP, APNG, AVIF) verranno convertite in GIF animate prima del salvataggio.</div>
+    <label class="checkbox-label">
+      <input type="checkbox" id="convert-anim-gif" checked> Abilita conversione in GIF
     </label>
+  </div>
+
+  <div class="card">
+    <span class="label">Colore icona sulle immagini</span>
+    <div class="radio-group">
+      <label><input type="radio" name="iconColor" value="red" checked> Rosso (predefinito)</label>
+      <label><input type="radio" name="iconColor" value="black"> Nero</label>
+      <label><input type="radio" name="iconColor" value="darkblue"> Azzurro scuro</label>
+    </div>
+  </div>
+
+  <div class="card">
+    <span class="label">Posizione icona</span>
+    <div class="radio-group">
+      <label><input type="radio" name="iconPosition" value="follow" checked> Segue lo scroll (sempre visibile)</label>
+      <label><input type="radio" name="iconPosition" value="center"> Al centro dell'immagine</label>
+    </div>
   </div>
 
   <hr>

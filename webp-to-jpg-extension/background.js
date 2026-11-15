@@ -16,24 +16,21 @@ chrome.runtime.onInstalled.addListener(() => {
   });
 });
 
-// 1. Menu contestuale
 chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   if (info.menuItemId !== MENU_ID || !info.srcUrl) return;
-  await processImage(info.srcUrl, tab, info.frameId || 0);
+  await handleSave(info.srcUrl, tab, info.frameId || 0);
 });
 
-// 2. Icona rapida (solo se attivata)
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
-  if (msg?.type === "quick-save") {
-    processImage(msg.url, sender.tab, sender.frameId || 0)
-      .then(() => sendResponse({ ok: true }))
-      .catch((err) => sendResponse({ ok: false, error: err.message }));
+  if (msg?.type === "save-from-overlay" && msg.url && sender.tab) {
+    handleSave(msg.url, sender.tab, sender.frameId || 0)
+      .then((res) => sendResponse(res || { ok: true }))
+      .catch((err) => sendResponse({ ok: false, error: err?.message || String(err) }));
     return true;
   }
 });
 
-// Funzione principale che coordina il salvataggio
-async function processImage(url, tab, frameId) {
+async function handleSave(url, tab, frameId) {
   try {
     const handleStatic = await idbGet("handle-static");
     const handleAnim = await idbGet("handle-anim");
@@ -52,14 +49,16 @@ async function processImage(url, tab, frameId) {
 
     await ensureOffscreen();
 
-    const settings = await chrome.storage.local.get({ convertWebpToGif: true });
+    // Impostazione GIF attiva di default se non specificato altrimenti
+    const settings = await chrome.storage.local.get("convertAnimToGif");
+    const convertAnimatedToGif = settings.convertAnimToGif !== false;
 
     const result = await chrome.runtime.sendMessage({
       type: "process-image",
-      url: url,
+      url,
       handleStaticValid,
       handleAnimValid,
-      convertWebpToGif: settings.convertWebpToGif
+      convertAnimatedToGif
     });
 
     if (!result || !result.ok) {
@@ -67,36 +66,31 @@ async function processImage(url, tab, frameId) {
     }
 
     if (result.fallback) {
-      if (tab && tab.id) {
-        try {
-          await chrome.scripting.executeScript({
-            target: { tabId: tab.id, frameIds: [frameId] },
-            files: ['content.js']
-          });
-          
-          const dlResult = await chrome.tabs.sendMessage(tab.id, {
-            type: "download",
-            dataUrl: result.dataUrl,
-            filename: result.filename
-          }, { frameId: frameId });
-
-          if (!dlResult || !dlResult.ok) {
-            throw new Error(dlResult?.error || "Impossibile avviare il download nella pagina.");
-          }
-          
-          await reportSuccess(result.filename, "Scelta dall'utente");
-
-        } catch (err) {
-          throw new Error("Impossibile avviare il salvataggio su questa pagina. Riprova da una pagina web normale.");
+      // Nessuna cartella valida configurata per questa categoria:
+      // apriamo una piccola finestra popup per scegliere la cartella.
+      // Quella finestra salverà il file e imposterà la cartella scelta
+      // come nuova cartella predefinita per la categoria (static/anim).
+      await chrome.storage.session.set({
+        pendingSave: {
+          dataUrl: result.dataUrl,
+          filename: result.filename,
+          category: result.category
         }
-      }
+      });
+      await chrome.windows.create({
+        url: chrome.runtime.getURL("picker.html"),
+        type: "popup",
+        width: 480,
+        height: 320
+      });
     } else {
       await reportSuccess(result.filename, result.folder);
     }
 
+    return { ok: true };
   } catch (err) {
     await reportError(err);
-    throw err;
+    return { ok: false, error: err?.message || String(err) };
   }
 }
 
@@ -105,8 +99,7 @@ async function ensureOffscreen() {
   await chrome.offscreen.createDocument({
     url: "offscreen.html",
     reasons: ["BLOBS"],
-    justification: "Scarica, converte e prepara i file",
-    lifetime: "sw" // Chiude il documento offscreen quando il service worker va in pausa
+    justification: "Scarica, converte e prepara i file"
   });
 }
 

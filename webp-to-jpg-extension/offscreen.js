@@ -11,88 +11,98 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   return true;
 });
 
-async function handleProcess({ url, handleStaticValid, handleAnimValid, convertWebpToGif }) {
+async function handleProcess({ url, handleStaticValid, handleAnimValid, convertAnimatedToGif }) {
   const response = await fetch(url);
   if (!response.ok) throw new Error("HTTP " + response.status);
   
   let originalBlob = await response.blob();
   const bytes = new Uint8Array(await originalBlob.arrayBuffer());
 
-  const mime = sniffMime(bytes);
-  let category, ext;
-  
-  if (mime === "image/gif") {
-    const anim = isAnimatedGif(bytes);
-    category = anim ? "anim" : "static";
-    ext = anim ? "gif" : "jpg";
-  } else if (mime === "image/webp") {
-    const anim = isAnimatedWebp(bytes);
-    category = anim ? "anim" : "static";
-    ext = anim ? "webp" : "jpg";
-    
-    if (anim && convertWebpToGif) {
-        try {
-            const gifBlob = await convertWebpToGifBlob(originalBlob);
-            originalBlob = gifBlob; 
-            ext = "gif";
-        } catch (e) {
-            console.warn("Conversione WebP -> GIF fallita, salvo come WebP originale.", e);
-        }
-    }
+  let mime = sniffMime(bytes);
+  let category = "static";
+  let ext = "jpg";
+  let isAnimated = false;
 
-  } else {
-    category = "static";
-    ext = "jpg";
+  // 1. Rilevamento Animazione
+  if (mime === "image/gif") {
+    isAnimated = isAnimatedGif(bytes);
+    if (isAnimated) { category = "anim"; ext = "gif"; }
+  } else if (mime === "image/webp") {
+    isAnimated = isAnimatedWebp(bytes);
+    if (isAnimated) { category = "anim"; ext = "webp"; }
+  } else if (mime === "image/apng" || mime === "image/png") {
+    // FIX: ImageDecoder di Chrome non riconosce "image/apng". Dobbiamo usare "image/png".
+    isAnimated = await checkIfAnimated(originalBlob, "image/png");
+    if (isAnimated) {
+      category = "anim";
+      ext = "apng";
+    }
+  } else if (mime === "image/avif") {
+    isAnimated = await checkIfAnimated(originalBlob, "image/avif");
+    if (isAnimated) { category = "anim"; ext = "avif"; }
+  }
+
+  // 2. Conversione in GIF (se richiesto)
+  if (isAnimated && convertAnimatedToGif && ext !== "gif") {
+    try {
+      // Passiamo "image/png" se è un APNG
+      const decoderMime = (mime === "image/apng" || mime === "image/png") ? "image/png" : mime;
+      const gifBlob = await convertToGifBlob(originalBlob, decoderMime);
+      originalBlob = gifBlob; 
+      ext = "gif";
+    } catch (e) {
+      console.warn(`Conversione ${mime} -> GIF fallita. Salvo nel formato originale (${ext}).`, e);
+    }
+  }
+
+  // 3. Salvataggio JPG (se statico)
+  if (category === "static" && mime !== "image/jpeg") {
+    originalBlob = await convertToJpgBlob(originalBlob);
   }
 
   const filename = buildFilename(ext);
   const isValidCategory = category === "anim" ? handleAnimValid : handleStaticValid;
   const handleKey = category === "anim" ? "handle-anim" : "handle-static";
 
-  let finalBlob = originalBlob;
-  
-  if (ext === "jpg" && mime !== "image/jpeg") {
-    finalBlob = await convertToJpgBlob(originalBlob);
-  }
-
   if (isValidCategory) {
-    const dir = await idbGet(handleKey);
-    const fileHandle = await dir.getFileHandle(filename, { create: true });
-    const writable = await fileHandle.createWritable();
-    await writable.write(finalBlob);
-    await writable.close();
+    try {
+      const dir = await idbGet(handleKey);
+      const fileHandle = await dir.getFileHandle(filename, { create: true });
+      const writable = await fileHandle.createWritable();
+      await writable.write(originalBlob);
+      await writable.close();
 
-    await idbSet("last-save", { filename, folder: dir.name, at: Date.now(), type: ext });
-    return { filename, folder: dir.name, fallback: false };
-  } else {
-    const dataUrl = await blobToDataUrl(finalBlob);
-    await idbSet("last-save", { filename, folder: "Salva con nome", at: Date.now(), type: ext });
-    return { filename, fallback: true, dataUrl };
+      await idbSet("last-save", { filename, folder: dir.name, at: Date.now(), type: ext });
+      return { filename, folder: dir.name, fallback: false, category };
+    } catch (e) {
+      // La cartella configurata non è più raggiungibile (es. cancellata/spostata):
+      // passiamo al fallback (selezione nuova cartella) invece di generare un errore.
+      // (nessun log: è un comportamento previsto, non un errore reale)
+    }
   }
+
+  const dataUrl = await blobToDataUrl(originalBlob);
+  await idbSet("last-save", { filename, folder: "Salva con nome", at: Date.now(), type: ext });
+  return { filename, fallback: true, dataUrl, category };
 }
 
-// --- CONVERSIONE WEBP ANIMATA -> GIF ANIMATA (Corretta) ---
-async function convertWebpToGifBlob(webpBlob) {
-  const decoder = new ImageDecoder({
-    data: await webpBlob.arrayBuffer(),
-    type: 'image/webp'
-  });
-  
+// Funzione generica per convertire in GIF
+async function convertToGifBlob(imageBlob, mimeType) {
+  const arrayBuffer = await imageBlob.arrayBuffer();
+  const decoder = new ImageDecoder({ data: arrayBuffer, type: mimeType });
   await decoder.tracks.ready;
+  
   const track = decoder.tracks.selectedTrack;
   
   if (!track || track.frameCount <= 1) {
     throw new Error("Non è un'animazione valida");
   }
 
-  // Decodifica il primo frame per ottenere le dimensioni esatte
   const firstFrame = await decoder.decode({ frameIndex: 0 });
   const width = firstFrame.image.displayWidth;
   const height = firstFrame.image.displayHeight;
 
-  if (!width || !height) {
-    throw new Error("Impossibile leggere le dimensioni dell'immagine.");
-  }
+  if (!width || !height) throw new Error("Dimensioni non valide.");
 
   const canvas = new OffscreenCanvas(width, height);
   const ctx = canvas.getContext('2d', { willReadFrequently: true });
@@ -110,7 +120,6 @@ async function convertWebpToGifBlob(webpBlob) {
     const palette = quantize(imageData.data, 256);
     const index = applyPalette(imageData.data, palette);
     
-    // image.duration è in microsecondi, gifenc vuole millisecondi
     const delay = image.duration ? Math.round(image.duration / 1000) : 100;
     
     gif.writeFrame(index, canvas.width, canvas.height, { palette, delay });
@@ -121,7 +130,17 @@ async function convertWebpToGifBlob(webpBlob) {
   gif.finish();
   return new Blob([gif.bytes()], { type: 'image/gif' });
 }
-// ----------------------------------------------------------------
+
+async function checkIfAnimated(blob, mime) {
+  try {
+    const decoder = new ImageDecoder({ data: await blob.arrayBuffer(), type: mime });
+    await decoder.tracks.ready;
+    return decoder.tracks.selectedTrack.frameCount > 1;
+  } catch (e) {
+    console.warn(`Impossibile verificare l'animazione per ${mime}`, e);
+    return false;
+  }
+}
 
 function blobToDataUrl(blob) {
   return new Promise((resolve, reject) => {
@@ -154,9 +173,31 @@ function buildFilename(ext) {
 
 function sniffMime(b) {
   if (b[0] === 0xff && b[1] === 0xd8) return "image/jpeg";
-  if (b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4e && b[3] === 0x47) return "image/png";
+  
+  // PNG / APNG
+  if (b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4e && b[3] === 0x47) {
+    let off = 8;
+    while (off + 8 <= b.length) {
+      const len = (b[off] << 24) | (b[off + 1] << 16) | (b[off + 2] << 8) | b[off + 3];
+      const type = String.fromCharCode(b[off + 4], b[off + 5], b[off + 6], b[off + 7]);
+      if (type === "acTL") return "image/apng";
+      if (type === "IDAT") break;
+      off += 4 + 4 + len + 4;
+    }
+    return "image/png";
+  }
+  
   if (b[0] === 0x47 && b[1] === 0x49 && b[2] === 0x46) return "image/gif";
+  
+  // WebP
   if (b[0] === 0x52 && b[1] === 0x49 && b[2] === 0x46 && b[3] === 0x46 && b[8] === 0x57 && b[9] === 0x45 && b[10] === 0x42 && b[11] === 0x50) return "image/webp";
+  
+  // AVIF
+  if (b[4] === 0x66 && b[5] === 0x74 && b[6] === 0x79 && b[7] === 0x70) {
+    const brand = String.fromCharCode(b[8], b[9], b[10], b[11]);
+    if (brand === "avif" || brand === "avis") return "image/avif";
+  }
+
   return "application/octet-stream";
 }
 

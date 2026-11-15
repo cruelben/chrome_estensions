@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Salva WebP in JPG",
-  "version": "5.4",
+  "version": "5.3",
   "description": "Converte e salva immagini WebP/GIF in JPG o nella cartella animazioni scelta.",
   "minimum_chrome_version": "116",
   "icons": {
@@ -23,7 +23,7 @@
     "storage",
     "notifications",
     "offscreen",
-    "scripting"
+    "windows"
   ],
   "host_permissions": [
     "http://*/*",
@@ -36,7 +36,7 @@
   "content_scripts": [
     {
       "matches": ["http://*/*", "https://*/*"],
-      "js": ["content.js"],
+      "js": ["overlay.js"],
       "run_at": "document_idle",
       "all_frames": true
     }
